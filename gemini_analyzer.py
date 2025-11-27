@@ -11,14 +11,24 @@ class GeminiSecurityAnalyzer:
             raise ValueError("GEMINI_API_KEY não configurada")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
     
     def analyze_change(self, change_info: dict) -> dict:
         """Analisa mudança com Gemini"""
         
         prompt = f"""Você é um especialista em segurança do Google Cloud.
-Analise esta alteração e responda APENAS com JSON válido:
+Analise esta alteração e responda APENAS com JSON válido.
 
+REGRAS DE CLASSIFICAÇÃO:
+- CRITICO: sourceRanges contém 0.0.0.0/0 com portas sensíveis (22, 3389, 3306, 5432, 27017)
+- ALTO: sourceRanges contém 0.0.0.0/0 com qualquer porta
+- MEDIO: Alterações em IAM ou permissões amplas
+- BAIXO: Regras com IPs específicos ou redes internas (10.x, 172.16.x, 192.168.x)
+- NENHUM: Alterações cosméticas ou baixo impacto
+
+IMPORTANTE: Redes internas (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) são SEGURAS e devem ser classificadas como BAIXO ou NENHUM.
+
+Responda com JSON:
 {{
     "risco": "CRITICO|ALTO|MEDIO|BAIXO|NENHUM",
     "categoria": "rede|iam|storage|compute|outro",
